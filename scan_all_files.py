@@ -40,8 +40,8 @@ def get_files_created_modified_today():
     for root, _, files in os.walk(path):
         for file in files:
             file_path = os.path.join(root, file)
-            creation_time = path.datetime.fromtimestamp(os.path.getctime(file_path)).date()
-            modification_time = path.datetime.fromtimestamp(os.path.getmtime(file_path)).date()
+            creation_time = datetime.datetime.fromtimestamp(os.path.getctime(file_path)).date()
+            modification_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).date()
             if today in (creation_time, modification_time):
                 files_created_modified_today.append(file_path)
 
