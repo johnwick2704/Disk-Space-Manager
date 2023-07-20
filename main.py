@@ -1,4 +1,4 @@
-from space_availability import get_space
+from space_availability import get_space, get_perc_distribution
 from detect_duplicates import get_duplicate_files
 
 
@@ -15,8 +15,9 @@ def main_method():
         selection = input("Please Select:")
         if selection == '1':
             get_space()
+            get_perc_distribution()
         elif selection == '2':
-            print("delete")
+            get_duplicate_files()
         elif selection == '3':
             print("find")
         elif selection == '4':

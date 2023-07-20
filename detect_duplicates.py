@@ -59,7 +59,7 @@ def duplicate_by_content(path):
 
 
 def get_duplicate_files():
-    menu = {'1': "Duplicate by Name", '2': "Duplicate by content", '4': "Exit"}
+    menu = {'1': "Duplicate by Name", '2': "Duplicate by content", '3': "Exit"}
     path = os.getcwd()
 
     while True:
