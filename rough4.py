@@ -1,13 +1,19 @@
-import time
+import random
+import asciichartpy
 
-fin = []
+def generate_random_data(num_points):
+    # Generate random data for the chart
+    data = [random.randint(0, 100) for _ in range(num_points)]
+    return data
 
-start = time.time()
-for i in range(1, 66666666):
-    fin.append(i)
-end = time.time()
-print(end - start)
+if __name__ == "__main__":
+    num_points = 20  # Number of data points for the chart
 
+    # Generate random data for the chart
+    data = generate_random_data(num_points)
 
-# 2.6699910163879395
-# 8.571256875991821
+    # Plot the chart
+    chart = asciichartpy.plot(data)
+
+    # Display the chart in the terminal
+    print(chart)

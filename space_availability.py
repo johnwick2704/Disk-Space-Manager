@@ -1,5 +1,6 @@
 import os
 import shutil
+import plotext as plt
 
 
 def get_space():
@@ -89,3 +90,10 @@ def get_perc_distribution():
     print(f"Videos = {perc_vid}%, Images = {perc_img}%, Documents = {perc_doc}%, "
           f"Applications = {perc_app}%, Others = {perc_oth}%")
 
+    type_list = ['Videos', 'Images', 'Documents', 'Apps', 'Others']
+    perc = [perc_vid, perc_img, perc_doc, perc_app, perc_oth]
+    plt.bar(type_list, perc)
+    plt.show()
+
+
+get_perc_distribution()

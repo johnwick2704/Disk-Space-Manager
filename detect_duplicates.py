@@ -68,7 +68,7 @@ def get_duplicate_files():
         for entry in options:
             print(entry, menu[entry])
 
-        selection = input("Please Select:")
+        selection = input("Please Select: ")
         if selection == '1':
             category, duplicate_dict = duplicate_by_name(path)
             display(category, duplicate_dict)
