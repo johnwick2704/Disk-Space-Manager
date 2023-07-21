@@ -59,12 +59,12 @@ def file_type(file_name):
 def get_perc_distribution():
     path = os.getcwd()
     vid_sz, oth_sz, img_sz, app_sz, doc_sz = 0, 0, 0, 0, 0
+    unit = "KB"
 
     for (root, dirs, files) in os.walk(path):
         for file in files:
             ex = file_type(file)
             size = os.stat(os.path.join(root, file)).st_size / 1024
-            unit = "KB"
 
             if ex == "Video":
                 vid_sz = vid_sz + size
