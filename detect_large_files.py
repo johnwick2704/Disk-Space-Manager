@@ -2,24 +2,36 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 
 
-def identify_large_files():
+def identify_large_files(path):
     large_files_dict = {}
-    threshold = (1024 * 1024) / 5
-    # path = os.getcwd().split('\\')[0] + "\\"
-    path = ("C:\Program Files (x86)/")
+    threshold = int(input("Large file threshold limit in KB ? "))
 
-    def process_directory(directory):
-        for root, dirs, files in os.walk(directory):
-            file_paths = [os.path.join(root, file) for file in files]
-            for file_path in file_paths:
-                file_size = os.path.getsize(file_path) / 1024
-                if file_size >= threshold:
-                    large_files_dict[file_path] = file_size
+    def process_directory(path):
+        for root, dirs, files in os.walk(path):
+            try:
+                file_paths = [os.path.join(root, file) for file in files]
+                for file_path in file_paths:
+                    file_size = os.path.getsize(file_path) / 1024
+                    if file_size >= threshold:
+                        large_files_dict[file_path] = file_size
+            except OSError:
+                pass
 
     subdirectories = [os.path.join(path, dir) for dir in os.listdir(path) if os.path.isdir(os.path.join(path, dir))]
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(process_directory, subdirectories)
+
+    for root, dirs, files in os.walk(path):
+        file_paths = [os.path.join(root, file) for file in files]
+        for file_path in file_paths:
+            try:
+                file_size = os.path.getsize(file_path) / 1024
+                if file_size >= threshold:
+                    large_files_dict[file_path] = file_size
+            except OSError:
+                pass
+        break
 
     if large_files_dict:
         print("Large files found:")
@@ -37,6 +49,3 @@ def format_bytes(size):
         size /= 1024
 
     return f"{size:.2f} PB"
-
-
-identify_large_files()

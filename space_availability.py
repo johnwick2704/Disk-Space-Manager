@@ -56,15 +56,30 @@ def file_type(file_name):
         return "Other"
 
 
-def get_perc_distribution():
-    path = os.getcwd()
+def unit_finder(vid_sz):
+    vid_unit = "KB"
+    if vid_sz > 1024:
+        vid_sz = vid_sz / 1024
+        vid_unit = "MB"
+        if vid_sz > 1024:
+            vid_sz = vid_sz / 1024
+            vid_unit = "GB"
+
+    return vid_sz, vid_unit
+
+
+def get_perc_distribution(path):
     vid_sz, oth_sz, img_sz, app_sz, doc_sz = 0, 0, 0, 0, 0
     unit = "KB"
 
     for (root, dirs, files) in os.walk(path):
         for file in files:
             ex = file_type(file)
-            size = os.stat(os.path.join(root, file)).st_size / 1024
+            size = 0
+            try:
+                size = os.stat(os.path.join(root, file)).st_size / 1024
+            except OSError:
+                pass
 
             if ex == "Video":
                 vid_sz = vid_sz + size
@@ -77,6 +92,12 @@ def get_perc_distribution():
             else:
                 oth_sz = oth_sz + size
 
+    vid_sz, vid_unit = unit_finder(vid_sz)
+    img_sz, img_unit = unit_finder(img_sz)
+    app_sz, app_unit = unit_finder(app_sz)
+    doc_sz, doc_unit = unit_finder(doc_sz)
+    oth_sz, oth_unit = unit_finder(oth_sz)
+
     sum = vid_sz + app_sz + img_sz + doc_sz + oth_sz
 
     perc_vid = round(((vid_sz * 100) / sum), 2)
@@ -86,7 +107,8 @@ def get_perc_distribution():
     perc_oth = round(((oth_sz * 100) / sum), 2)
 
     print(f"Size of Current Directory = {round(sum, 2)} {unit}")
-
+    print(f"Videos = {vid_sz} {vid_unit}, Images = {img_sz} {img_unit}, Documents = {doc_sz} {doc_unit}, "
+          f"Applications = {app_sz} {app_unit}, Others = {oth_sz} {oth_unit}")
     print(f"Videos = {perc_vid}%, Images = {perc_img}%, Documents = {perc_doc}%, "
           f"Applications = {perc_app}%, Others = {perc_oth}%")
 
@@ -94,6 +116,3 @@ def get_perc_distribution():
     perc = [perc_vid, perc_img, perc_doc, perc_app, perc_oth]
     plt.bar(type_list, perc)
     plt.show()
-
-
-get_perc_distribution()

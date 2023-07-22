@@ -1,90 +1,124 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 
-def remove_empty_files():
-    path = os.getcwd()
+def remove_empty_files(path):
     empty_files = []
 
-    for (root, dirs, files) in os.walk(path):
-        for file in files:
-            if os.stat(file).st_size == 0:
-                empty_files.append(os.path.join(root, file))
-
-    for file in empty_files:
-        os.remove(file)
-
-
-def delete_large_files():
-    large_files_list = []
-    threshold = 1
-    path = os.getcwd()
-
-    for (root, dirs, files) in os.walk(path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            if os.path.isfile(file_path):
-                file_size = os.path.getsize(file_path) / 1024
-                if file_size >= threshold:
-                    large_files_list.append(file_path)
-
-    for file in large_files_list:
-        os.remove(file)
-
-
-def delete_n_days_old_file(n):
-    import datetime
-
-    path = os.getcwd()
-    today = datetime.date.today()
-    print(today)
-
-    for (root, dirs, files) in os.walk(path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            modification_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).date()
-            if (today - modification_time) >= datetime.timedelta(days=n):
-                os.remove(file_path)
-
-
-def delete_files_with_same_content():
-    import hashlib
-    import os
-    from concurrent.futures import ThreadPoolExecutor
-
-    path = os.getcwd()
-    file_name_dict = {}
-    buff_size = 64 * 1024
-
-    def process_duplicate_by_content(path):
+    def process_remove_empty_files(path):
         for (root, dirs, files) in os.walk(path):
             for file in files:
-                file_path = os.path.join(root, file)
-                blake = hashlib.blake2b()
-                with open(file_path, 'rb') as f:
-                    while True:
-                        data = f.read(buff_size)
-                        if not data:
-                            break
-                        blake.update(data)
-
-                hash_val = blake.hexdigest()
-
-                if hash_val not in file_name_dict:
-                    file_name_dict[hash_val] = [file_path]
-                else:
-                    val = file_name_dict.get(hash_val)
-                    val.append(file_path)
-                    file_name_dict[hash_val] = val
+                try:
+                    file_path = os.path.join(root, file)
+                    if os.stat(file_path).st_size == 0:
+                        empty_files.append(os.path.join(root, file))
+                except OSError:
+                    pass
 
     subdirectories = [os.path.join(path, dir) for dir in os.listdir(path) if os.path.isdir(os.path.join(path, dir))]
 
-    with ThreadPoolExecutor() as executor:
-        executor.map(process_duplicate_by_content, subdirectories)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        executor.map(process_remove_empty_files, subdirectories)
+
+    for (root, dirs, files) in os.walk(path):
+        for file in files:
+            try:
+                file_path = os.path.join(root, file)
+                if os.stat(file_path).st_size == 0:
+                    empty_files.append(os.path.join(root, file))
+            except OSError:
+                pass
+        break
+
+    delete_decision(empty_files)
 
 
+def delete_large_files(path):
+    large_files_list = []
+    threshold = int(input("Enter threshold in KB. "))
+
+    def process_delete_large_files(path):
+        for (root, dirs, files) in os.walk(path):
+            for file in files:
+                try:
+                    file_path = os.path.join(root, file)
+                    if os.path.isfile(file_path):
+                        file_size = os.path.getsize(file_path) / 1024
+                        if file_size >= threshold:
+                            large_files_list.append(file_path)
+                except OSError:
+                    pass
+
+    subdirectories = [os.path.join(path, dir) for dir in os.listdir(path) if os.path.isdir(os.path.join(path, dir))]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        executor.map(process_delete_large_files, subdirectories)
+
+    for (root, dirs, files) in os.walk(path):
+        for file in files:
+            try:
+                file_path = os.path.join(root, file)
+                if os.path.isfile(file_path):
+                    file_size = os.path.getsize(file_path) / 1024
+                    if file_size >= threshold:
+                        large_files_list.append(file_path)
+            except OSError:
+                pass
+        break
+
+    delete_decision(large_files_list)
 
 
-def delete():
+def delete_n_days_old_file(path):
+    import datetime
+
+    today = datetime.date.today()
+    old_files = []
+    n = int(input("Enter how many days old. "))
+
+    def process_delete_n_days_old_file(path):
+        for (root, dirs, files) in os.walk(path):
+            for file in files:
+                try:
+                    file_path = os.path.join(root, file)
+                    modification_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).date()
+                    if (today - modification_time) >= datetime.timedelta(days=n):
+                        old_files.append(file_path)
+                except OSError:
+                    pass
+
+    subdirectories = [os.path.join(path, dir) for dir in os.listdir(path) if os.path.isdir(os.path.join(path, dir))]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        executor.map(process_delete_n_days_old_file, subdirectories)
+
+    for (root, dirs, files) in os.walk(path):
+        for file in files:
+            try:
+                file_path = os.path.join(root, file)
+                modification_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).date()
+                if (today - modification_time) >= datetime.timedelta(days=n):
+                    old_files.append(file_path)
+            except OSError:
+                pass
+        break
+
+    delete_decision(old_files)
+
+
+def delete_decision(delete_list):
+    if len(delete_list) > 0:
+        for file in delete_list:
+            dec = input(f"Delete file {file} y/n?")
+            if dec == 'y':
+                os.remove(file)
+            else:
+                continue
+    else:
+        print("No files to delete")
+
+
+def delete(path):
     menu = {'1': "Delete Empty Files", '2': "Delete large files", '3': "Delete n days old files", '4': "Exit"}
 
     while True:
@@ -95,14 +129,11 @@ def delete():
 
         selection = input("Please Select: ")
         if selection == '1':
-            remove_empty_files()
+            remove_empty_files(path)
         elif selection == '2':
-            delete_large_files()
+            delete_large_files(path)
         elif selection == '3':
-            days = input("Number of days: ")
-            delete_n_days_old_file(days)
-        elif selection == '5':
-            delete_files_with_same_content()
+            delete_n_days_old_file(path)
         elif selection == '4':
             break
         else:

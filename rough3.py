@@ -1,28 +1,15 @@
-import os
+def delete_files_with_same_content():
+    import hashlib
 
-
-def display(category, duplicate_dict):
-    print(category)
-
-    for key, value in duplicate_dict.items():
-        if len(value) > 1:
-            print(key, value)
-
-
-def duplicate_by_content(path):
-    import os
-    from concurrent.futures import ThreadPoolExecutor
-
+    path = os.getcwd()
     file_name_dict = {}
     buff_size = 64 * 1024
 
     def process_duplicate_by_content(path):
-        from hashlib import blake2b
         for (root, dirs, files) in os.walk(path):
             for file in files:
-                lst = ['/', file]
                 file_path = os.path.join(root, file)
-                blake = blake2b()
+                blake = hashlib.blake2b()
                 with open(file_path, 'rb') as f:
                     while True:
                         data = f.read(buff_size)
@@ -44,11 +31,32 @@ def duplicate_by_content(path):
     with ThreadPoolExecutor() as executor:
         executor.map(process_duplicate_by_content, subdirectories)
 
-    category = "DUPLICATE BY CONTENT"
 
-    return category, file_name_dict
+def delete_oldest_duplicates(duplicates):
+    for duplicate_group in duplicates.values():
+        # sorting duplicates so that later on, leaving the last instance(latest modified),
+        # the ones above it can be removed
+        sorted_files = sorted(duplicate_group, key=os.path.getmtime)
+        for file_path in sorted_files[:-1]:
+            print(f"Duplicate: {file_path}")
+            user_input = input("Do you want to delete this duplicate? (y/n): ")
+            if user_input == 'y':
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            else:
+                print(f"Skipped deletion for {file_path}")
 
 
-path = os.getcwd()
-category, duplicate_dict = duplicate_by_content(path)
-display(category, duplicate_dict)
+def delete_duplicate_files_folders(duplicates):
+    if duplicates:
+        print("Found duplicates:")
+        for file_list in duplicates.values:
+            print("\n".join(file_list))
+        user_input = input("Do you want to delete the oldest duplicates? (y/n): ")
+        if user_input == 'y':
+            print("\nDeleting oldest duplicates...")
+            delete_oldest_duplicates(duplicates)
+        else:
+            print("Deletion canceled.")
+    else:
+        print("Files not found.")
